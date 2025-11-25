@@ -42,6 +42,19 @@
 /* External variables ---------------------------------------------------------*/
 /* USER CODE BEGIN EV */
 
+typedef struct
+{
+    uint8_t rs485_status;
+    uint8_t adc_status;
+    uint8_t reserved[6]; // alignment için
+} DeviceStatus_t;
+
+#define STATUS_FLASH_ADDRESS  ((void *)0x0803F800UL)
+
+/* Bu RAM’de duran mevcut değer */
+DeviceStatus_t deviceStatus;
+
+
 /* USER CODE END EV */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -343,6 +356,21 @@ static UTIL_TIMER_Object_t JoinLedTimer;
 /* Exported functions ---------------------------------------------------------*/
 /* USER CODE BEGIN EF */
 
+void SaveStatusToFlash(void)
+{
+    FLASH_IF_Erase(STATUS_FLASH_ADDRESS, FLASH_PAGE_SIZE);
+    FLASH_IF_Write(STATUS_FLASH_ADDRESS, (uint8_t *)&deviceStatus, sizeof(DeviceStatus_t));
+}
+
+void LoadStatusFromFlash(void)
+{
+    FLASH_IF_Read(&deviceStatus, STATUS_FLASH_ADDRESS, sizeof(DeviceStatus_t));
+
+    // Eğer flash boşsa (0xFFFFFFFF) default değerlere çek
+    if(deviceStatus.rs485_status > 1) deviceStatus.rs485_status = 0;
+    if(deviceStatus.adc_status > 1)  deviceStatus.adc_status  = 0;
+}
+
 /* USER CODE END EF */
 
 void LoRaWAN_Init(void)
@@ -352,6 +380,7 @@ void LoRaWAN_Init(void)
   /* USER CODE END LoRaWAN_Init_LV */
 
   /* USER CODE BEGIN LoRaWAN_Init_1 */
+  LoadStatusFromFlash();
 
   /* Get LoRaWAN APP version*/
   APP_LOG(TS_OFF, VLEVEL_M, "APPLICATION_VERSION: V%X.%X.%X\r\n",
@@ -385,6 +414,10 @@ void LoRaWAN_Init(void)
           (uint8_t)(feature_version >> 16),
           (uint8_t)(feature_version >> 8),
           (uint8_t)(feature_version));
+
+  /* Mode Status */
+  APP_LOG(TS_OFF, VLEVEL_L, "ADC STATUS = %d\r\n", deviceStatus.adc_status);
+  APP_LOG(TS_OFF, VLEVEL_L, "RS485 STATUS = %d\r\n", deviceStatus.rs485_status);
 
   UTIL_TIMER_Create(&TxLedTimer, LED_PERIOD_TIME, UTIL_TIMER_ONESHOT, OnTxTimerLedEvent, NULL);
   UTIL_TIMER_Create(&RxLedTimer, LED_PERIOD_TIME, UTIL_TIMER_ONESHOT, OnRxTimerLedEvent, NULL);
@@ -509,22 +542,35 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
                 }
               }
               break;
+
             case LORAWAN_USER_APP_PORT:
-              if (appData->BufferSize == 1)
-              {
-                AppLedStateOn = appData->Buffer[0] & 0x01;
-                if (AppLedStateOn == RESET)
+                if (appData->BufferSize == 1)
                 {
-                  APP_LOG(TS_OFF, VLEVEL_H, "LED OFF\r\n");
-                  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
+                    uint8_t cmd = appData->Buffer[0];
+
+                    if (cmd == 00)
+                    {
+                        // RS485 toggle
+                    	deviceStatus.rs485_status ^= 1;
+                    	SaveStatusToFlash();
+                    	APP_LOG(TS_OFF, VLEVEL_L, "RS485 STATUS = %d\r\n", deviceStatus.rs485_status);
+                    }
+                    else if (cmd == 01)
+                    {
+                        // ADC toggle
+                    	deviceStatus.adc_status ^= 1;
+                    	SaveStatusToFlash();
+                    	APP_LOG(TS_OFF, VLEVEL_L, "ADC STATUS = %d\r\n", deviceStatus.adc_status);
+
+                    }
+                    else
+                    {
+                        APP_LOG(TS_OFF, VLEVEL_L, "UNKNOWN CMD\r\n");
+                    }
+
+                   // HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, sensorRS485_Status ? GPIO_PIN_SET : GPIO_PIN_RESET);
                 }
-                else
-                {
-                  APP_LOG(TS_OFF, VLEVEL_H, "LED ON\r\n");
-                  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET); /* LED_RED */
-                }
-              }
-              break;
+                break;
 
             default:
 
