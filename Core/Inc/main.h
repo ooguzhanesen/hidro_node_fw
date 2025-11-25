@@ -60,12 +60,16 @@ void Error_Handler(void);
 #define RTC_N_PREDIV_S 10
 #define RTC_PREDIV_S ((1<<RTC_N_PREDIV_S)-1)
 #define RTC_PREDIV_A ((1<<(15-RTC_N_PREDIV_S))-1)
+#define RS485_TX_Pin GPIO_PIN_6
+#define RS485_TX_GPIO_Port GPIOB
 #define LED3_Pin GPIO_PIN_11
 #define LED3_GPIO_Port GPIOB
 #define USARTx_RX_Pin GPIO_PIN_3
 #define USARTx_RX_GPIO_Port GPIOA
 #define USARTx_TX_Pin GPIO_PIN_2
 #define USARTx_TX_GPIO_Port GPIOA
+#define RS485_EN_Pin GPIO_PIN_8
+#define RS485_EN_GPIO_Port GPIOA
 #define PROB1_Pin GPIO_PIN_12
 #define PROB1_GPIO_Port GPIOB
 #define BUT1_Pin GPIO_PIN_0
@@ -73,10 +77,16 @@ void Error_Handler(void);
 #define BUT1_EXTI_IRQn EXTI0_IRQn
 #define PROB2_Pin GPIO_PIN_13
 #define PROB2_GPIO_Port GPIOB
+#define GPIO_3_Pin GPIO_PIN_14
+#define GPIO_3_GPIO_Port GPIOB
+#define GPIO_2_Pin GPIO_PIN_13
+#define GPIO_2_GPIO_Port GPIOC
 #define LED2_Pin GPIO_PIN_9
 #define LED2_GPIO_Port GPIOB
 #define LED1_Pin GPIO_PIN_15
 #define LED1_GPIO_Port GPIOB
+#define RS485_RX_Pin GPIO_PIN_7
+#define RS485_RX_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
