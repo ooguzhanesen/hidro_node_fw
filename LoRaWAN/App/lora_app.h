@@ -129,6 +129,20 @@ extern "C" {
 
 /* USER CODE BEGIN EC */
 
+#define LORAWAN_USER_MODE_SELECT_PORT               2
+#define LORAWAN_USER_GPIO_PORT                      1
+
+#define GPIO1_Port   GPIOA
+#define GPIO1_Pin    GPIO_PIN_12
+
+#define GPIO2_Port   GPIOC
+#define GPIO2_Pin    GPIO_PIN_13
+
+#define GPIO3_Port   GPIOB
+#define GPIO3_Pin    GPIO_PIN_14
+
+#define GPIO4_Port   GPIOB
+#define GPIO4_Pin    GPIO_PIN_13
 /* USER CODE END EC */
 
 /* Exported macros -----------------------------------------------------------*/

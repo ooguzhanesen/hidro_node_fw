@@ -74,13 +74,14 @@ void Error_Handler(void);
 #define PROB1_GPIO_Port GPIOB
 #define BUT1_Pin GPIO_PIN_0
 #define BUT1_GPIO_Port GPIOA
-#define BUT1_EXTI_IRQn EXTI0_IRQn
-#define PROB2_Pin GPIO_PIN_13
-#define PROB2_GPIO_Port GPIOB
+#define GPIO_4_Pin GPIO_PIN_13
+#define GPIO_4_GPIO_Port GPIOB
 #define GPIO_3_Pin GPIO_PIN_14
 #define GPIO_3_GPIO_Port GPIOB
 #define GPIO_2_Pin GPIO_PIN_13
 #define GPIO_2_GPIO_Port GPIOC
+#define GPIO_1_Pin GPIO_PIN_12
+#define GPIO_1_GPIO_Port GPIOA
 #define LED2_Pin GPIO_PIN_9
 #define LED2_GPIO_Port GPIOB
 #define LED1_Pin GPIO_PIN_15

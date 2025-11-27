@@ -543,7 +543,7 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
               }
               break;
 
-            case LORAWAN_USER_APP_PORT:
+            case LORAWAN_USER_MODE_SELECT_PORT:
                 if (appData->BufferSize == 1)
                 {
                     uint8_t cmd = appData->Buffer[0];
@@ -569,6 +569,60 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
                     }
 
                    // HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, sensorRS485_Status ? GPIO_PIN_SET : GPIO_PIN_RESET);
+                }
+                break;
+
+            case LORAWAN_USER_GPIO_PORT:
+                if (appData->BufferSize == 1)
+                {
+                    uint8_t cmd = appData->Buffer[0];
+
+                    switch(cmd)
+                    {
+                        case 0:  // GPIO1 OFF
+                            HAL_GPIO_WritePin(GPIO1_Port, GPIO1_Pin, GPIO_PIN_RESET);
+                            APP_LOG(TS_OFF, VLEVEL_L, "GPIO1 OFF\r\n");
+                            break;
+
+                        case 1:  // GPIO1 ON
+                            HAL_GPIO_WritePin(GPIO1_Port, GPIO1_Pin, GPIO_PIN_SET);
+                            APP_LOG(TS_OFF, VLEVEL_L, "GPIO1 ON\r\n");
+                            break;
+
+                        case 2:  // GPIO2 OFF
+                            HAL_GPIO_WritePin(GPIO2_Port, GPIO2_Pin, GPIO_PIN_RESET);
+                            APP_LOG(TS_OFF, VLEVEL_L, "GPIO2 OFF\r\n");
+                            break;
+
+                        case 3:  // GPIO2 ON
+                            HAL_GPIO_WritePin(GPIO2_Port, GPIO2_Pin, GPIO_PIN_SET);
+                            APP_LOG(TS_OFF, VLEVEL_L, "GPIO2 ON\r\n");
+                            break;
+
+                        case 4:  // GPIO3 OFF
+                            HAL_GPIO_WritePin(GPIO3_Port, GPIO3_Pin, GPIO_PIN_RESET);
+                            APP_LOG(TS_OFF, VLEVEL_L, "GPIO3 OFF\r\n");
+                            break;
+
+                        case 5:  // GPIO3 ON
+                            HAL_GPIO_WritePin(GPIO3_Port, GPIO3_Pin, GPIO_PIN_SET);
+                            APP_LOG(TS_OFF, VLEVEL_L, "GPIO3 ON\r\n");
+                            break;
+
+                        case 6:  // GPIO4 OFF
+                            HAL_GPIO_WritePin(GPIO4_Port, GPIO4_Pin, GPIO_PIN_RESET);
+                            APP_LOG(TS_OFF, VLEVEL_L, "GPIO4 OFF\r\n");
+                            break;
+
+                        case 7:  // GPIO4 ON
+                            HAL_GPIO_WritePin(GPIO4_Port, GPIO4_Pin, GPIO_PIN_SET);
+                            APP_LOG(TS_OFF, VLEVEL_L, "GPIO4 ON\r\n");
+                            break;
+
+                        default:
+                            APP_LOG(TS_OFF, VLEVEL_L, "UNKNOWN GPIO CMD\r\n");
+                            break;
+                    }
                 }
                 break;
 

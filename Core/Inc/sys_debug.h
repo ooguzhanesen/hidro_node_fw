@@ -46,28 +46,28 @@ extern "C" {
 /**
   * @brief Pin of Probe Line 1
   */
-#define PROBE_LINE1_PIN                           GPIO_PIN_12
+#define PROBE_LINE1_PIN                           GPIO_PIN_6
 
 /**
   * @brief Port of Probe Line 1
   */
-#define PROBE_LINE1_PORT                          GPIOB
+#define PROBE_LINE1_PORT                          GPIOA
 
 /**
   * @brief Enable GPIOs clock of Probe Line 1
   */
-#define PROBE_LINE1_CLK_ENABLE()                  __HAL_RCC_GPIOB_CLK_ENABLE()
+#define PROBE_LINE1_CLK_ENABLE()                  __HAL_RCC_GPIOA_CLK_ENABLE()
 
 /**
   * @brief Disable GPIOs clock of Probe Line 1
   */
-#define PROBE_LINE1_CLK_DISABLE()                 __HAL_RCC_GPIOB_CLK_DISABLE()
+#define PROBE_LINE1_CLK_DISABLE()                 __HAL_RCC_GPIOA_CLK_DISABLE()
 
 /**  Definition for Probe Line 2   **/
 /**
   * @brief Pin of Probe Line 2
   */
-#define PROBE_LINE2_PIN                           GPIO_PIN_13
+#define PROBE_LINE2_PIN                           GPIO_PIN_1
 
 /**
   * @brief Port of Probe Line 2
