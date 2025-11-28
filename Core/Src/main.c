@@ -26,6 +26,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "../../STM32CubeIDE/Application/User/LoRaWAN/App/ads1115/ads1115.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,8 +93,18 @@ int main(void)
   MX_LoRaWAN_Init();
   MX_I2C1_Init();
   MX_USART1_UART_Init();
+  MX_I2C3_Init();
   /* USER CODE BEGIN 2 */
-
+  // ADS1115 Init
+  if (ADS1115_Init(&hi2c3, ADS1115_DATA_RATE_64, ADS1115_PGA_ONE) == HAL_OK)
+  {
+      HAL_Delay(1500);
+  }
+  else
+  {
+	  HAL_Delay(1500);
+      //while (1);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */

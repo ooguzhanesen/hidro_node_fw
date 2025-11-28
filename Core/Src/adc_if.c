@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2021 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -73,7 +73,12 @@ static uint32_t ADC_ReadChannels(uint32_t channel);
 
 /* Exported functions --------------------------------------------------------*/
 /* USER CODE BEGIN EF */
+int32_t SYS_GetADC1Level(void)
+{
+	uint32_t measuredADC_level;
+	measuredADC_level = ADC_ReadChannels(ADC_CHANNEL_2);
 
+	return measuredADC_level;}
 /* USER CODE END EF */
 
 void SYS_InitMeasurement(void)

@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2021 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -91,6 +91,8 @@ int16_t SYS_GetTemperatureLevel(void);
 uint16_t SYS_GetBatteryLevel(void);
 
 /* USER CODE BEGIN EFP */
+
+int32_t SYS_GetADC1Level(void);
 
 /* USER CODE END EFP */
 

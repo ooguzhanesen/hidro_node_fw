@@ -36,6 +36,8 @@
 #include "flash_if.h"
 
 /* USER CODE BEGIN Includes */
+#include "../../STM32CubeIDE/Application/User/LoRaWAN/App/sensor/sensors_app.h"
+#include "../../STM32CubeIDE/Application/User/LoRaWAN/App/ads1115/ads1115.h"
 
 /* USER CODE END Includes */
 
@@ -54,6 +56,13 @@ typedef struct
 /* Bu RAM’de duran mevcut değer */
 DeviceStatus_t deviceStatus;
 
+
+typedef union {
+    float f;
+    int32_t i32;
+} conv_u;
+
+conv_u conv;
 
 /* USER CODE END EV */
 
@@ -332,11 +341,6 @@ static uint8_t AppDataBuffer[LORAWAN_APP_DATA_BUFFER_MAX_SIZE];
 static LmHandlerAppData_t AppData = { 0, 0, AppDataBuffer };
 
 /**
-  * @brief Specifies the state of the application LED
-  */
-static uint8_t AppLedStateOn = RESET;
-
-/**
   * @brief Timer to handle the application Tx Led to toggle
   */
 static UTIL_TIMER_Object_t TxLedTimer;
@@ -350,6 +354,11 @@ static UTIL_TIMER_Object_t RxLedTimer;
   * @brief Timer to handle the application Join Led to toggle
   */
 static UTIL_TIMER_Object_t JoinLedTimer;
+
+float adc_ch0 = 0;
+float adc_ch1 = 0;
+float adc_ch2 = 0;
+float adc_ch3 = 0;
 
 /* USER CODE END PV */
 
@@ -646,106 +655,117 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 static void SendTxData(void)
 {
   /* USER CODE BEGIN SendTxData_1 */
-  LmHandlerErrorStatus_t status = LORAMAC_HANDLER_ERROR;
-  uint8_t batteryLevel = GetBatteryLevel();
-  sensor_t sensor_data;
-  UTIL_TIMER_Time_t nextTxIn = 0;
+    LmHandlerErrorStatus_t status = LORAMAC_HANDLER_ERROR;
+    UTIL_TIMER_Time_t nextTxIn = 0;
 
-  if (LmHandlerIsBusy() == false)
-  {
-#ifdef CAYENNE_LPP
-    uint8_t channel = 0;
-#else
-    uint16_t pressure = 0;
-    int16_t temperature = 0;
-    uint16_t humidity = 0;
-    uint32_t i = 0;
-    int32_t latitude = 0;
-    int32_t longitude = 0;
-    uint16_t altitudeGps = 0;
-#endif /* CAYENNE_LPP */
-
-    EnvSensors_Read(&sensor_data);
-
-    APP_LOG(TS_ON, VLEVEL_M, "VDDA: %d\r\n", batteryLevel);
-    APP_LOG(TS_ON, VLEVEL_M, "temp: %d\r\n", (int16_t)(sensor_data.temperature));
-
-    AppData.Port = LORAWAN_USER_APP_PORT;
-
-#ifdef CAYENNE_LPP
-    CayenneLppReset();
-    CayenneLppAddBarometricPressure(channel++, sensor_data.pressure);
-    CayenneLppAddTemperature(channel++, sensor_data.temperature);
-    CayenneLppAddRelativeHumidity(channel++, (uint16_t)(sensor_data.humidity));
-
-    if ((LmHandlerParams.ActiveRegion != LORAMAC_REGION_US915) && (LmHandlerParams.ActiveRegion != LORAMAC_REGION_AU915)
-        && (LmHandlerParams.ActiveRegion != LORAMAC_REGION_AS923))
+    if (LmHandlerIsBusy() == false)
     {
-      CayenneLppAddDigitalInput(channel++, GetBatteryLevel());
-      CayenneLppAddDigitalOutput(channel++, AppLedStateOn);
+        uint32_t i = 0;
+
+        AppData.Port = LORAWAN_USER_APP_PORT;
+
+        /* ----------------------- ADS1115 VOLTAJ OKUMA ----------------------- */
+
+        float vin = ADS1115_ReadDividedVoltage(ADS1115_MUX_AIN2, 150000.0f, 20000.0f);
+
+        conv.f = vin;
+        AppData.Buffer[i++] = (conv.i32 >> 24) & 0xFF;
+        AppData.Buffer[i++] = (conv.i32 >> 16) & 0xFF;
+        AppData.Buffer[i++] = (conv.i32 >> 8)  & 0xFF;
+        AppData.Buffer[i++] = (conv.i32)       & 0xFF;
+
+        APP_LOG(TS_ON, VLEVEL_L, "VIN = %.3f V\r\n", vin);
+
+        /* ----------------------- RS485 (LEVEL, TEMP, COND) ----------------------- */
+
+        if (deviceStatus.rs485_status == 1)
+        {
+            float levelf = 0, tempf = 0, condf = 0;
+            sensor_Read_Data(&levelf, &tempf, &condf);
+
+            // LEVEL
+            conv.f = levelf;
+            AppData.Buffer[i++] = (conv.i32 >> 24) & 0xFF;
+            AppData.Buffer[i++] = (conv.i32 >> 16) & 0xFF;
+            AppData.Buffer[i++] = (conv.i32 >> 8)  & 0xFF;
+            AppData.Buffer[i++] = (conv.i32)       & 0xFF;
+
+            // TEMP
+            conv.f = tempf;
+            AppData.Buffer[i++] = (conv.i32 >> 24) & 0xFF;
+            AppData.Buffer[i++] = (conv.i32 >> 16) & 0xFF;
+            AppData.Buffer[i++] = (conv.i32 >> 8)  & 0xFF;
+            AppData.Buffer[i++] = (conv.i32)       & 0xFF;
+
+            // COND
+            conv.f = condf;
+            AppData.Buffer[i++] = (conv.i32 >> 24) & 0xFF;
+            AppData.Buffer[i++] = (conv.i32 >> 16) & 0xFF;
+            AppData.Buffer[i++] = (conv.i32 >> 8)  & 0xFF;
+            AppData.Buffer[i++] = (conv.i32)       & 0xFF;
+
+            APP_LOG(TS_ON, VLEVEL_L, "RS485 DATA: L=%.3f  T=%.3f  C=%.3f\r\n",
+                    levelf, tempf, condf);
+        }
+
+        /* ----------------------- 4–20mA (µA) AKIM ÖLÇÜMÜ ----------------------- */
+
+        if (deviceStatus.adc_status == 1)
+        {
+            float current_uA = -1.0f;
+
+            if (ADS1115_OK)
+            {
+                // ADS1115 üzerinden µA okuma
+                current_uA = ADS1115_ReadCurrent_mA(ADS1115_MUX_AIN0, 150.0f);
+
+                APP_LOG(TS_ON, VLEVEL_L,
+                        "4-20mA Current via ADS1115 = %.1f µA\r\n", current_uA);
+            }
+            else
+            {
+                // Dahili ADC fallback (zaten µA döner)
+                current_uA = Read4_20_150R(64, 3310, 0.0f, 1.0f);
+
+                APP_LOG(TS_ON, VLEVEL_L,
+                        "4-20mA Current via INTERNAL ADC = %.1f µA\r\n", current_uA);
+            }
+
+            // Payload'a 4 byte float olarak koy
+            conv.f = current_uA;
+            AppData.Buffer[i++] = (conv.i32 >> 24) & 0xFF;
+            AppData.Buffer[i++] = (conv.i32 >> 16) & 0xFF;
+            AppData.Buffer[i++] = (conv.i32 >> 8)  & 0xFF;
+            AppData.Buffer[i++] = (conv.i32)       & 0xFF;
+        }
+
+
+        /* ----------------------- Payload Boyutu ----------------------- */
+        AppData.BufferSize = i;
+
+        /* ----------------------- JOIN LED ----------------------- */
+        if ((JoinLedTimer.IsRunning) && (LmHandlerJoinStatus() == LORAMAC_HANDLER_SET))
+        {
+            UTIL_TIMER_Stop(&JoinLedTimer);
+            HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
+        }
+
+        /* ----------------------- LoRaWAN SEND ----------------------- */
+        status = LmHandlerSend(&AppData, LmHandlerParams.IsTxConfirmed, false);
+
+        if (status == LORAMAC_HANDLER_SUCCESS)
+        {
+            APP_LOG(TS_ON, VLEVEL_L, "SEND REQUEST\r\n");
+        }
+        else if (status == LORAMAC_HANDLER_DUTYCYCLE_RESTRICTED)
+        {
+            nextTxIn = LmHandlerGetDutyCycleWaitTime();
+            if (nextTxIn > 0)
+            {
+                APP_LOG(TS_ON, VLEVEL_L, "Next Tx in  : ~%d second(s)\r\n", (nextTxIn / 1000));
+            }
+        }
     }
-
-    CayenneLppCopy(AppData.Buffer);
-    AppData.BufferSize = CayenneLppGetSize();
-#else  /* not CAYENNE_LPP */
-    humidity    = (uint16_t)(sensor_data.humidity * 10);            /* in %*10     */
-    temperature = (int16_t)(sensor_data.temperature);
-    pressure = (uint16_t)(sensor_data.pressure * 100 / 10); /* in hPa / 10 */
-
-    AppData.Buffer[i++] = AppLedStateOn;
-    AppData.Buffer[i++] = (uint8_t)((pressure >> 8) & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)(pressure & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)(temperature & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)((humidity >> 8) & 0xFF);
-    AppData.Buffer[i++] = (uint8_t)(humidity & 0xFF);
-
-    if ((LmHandlerParams.ActiveRegion == LORAMAC_REGION_US915) || (LmHandlerParams.ActiveRegion == LORAMAC_REGION_AU915)
-        || (LmHandlerParams.ActiveRegion == LORAMAC_REGION_AS923))
-    {
-      AppData.Buffer[i++] = 0;
-      AppData.Buffer[i++] = 0;
-      AppData.Buffer[i++] = 0;
-      AppData.Buffer[i++] = 0;
-    }
-    else
-    {
-      latitude = sensor_data.latitude;
-      longitude = sensor_data.longitude;
-
-      AppData.Buffer[i++] = GetBatteryLevel();        /* 1 (very low) to 254 (fully charged) */
-      AppData.Buffer[i++] = (uint8_t)((latitude >> 16) & 0xFF);
-      AppData.Buffer[i++] = (uint8_t)((latitude >> 8) & 0xFF);
-      AppData.Buffer[i++] = (uint8_t)(latitude & 0xFF);
-      AppData.Buffer[i++] = (uint8_t)((longitude >> 16) & 0xFF);
-      AppData.Buffer[i++] = (uint8_t)((longitude >> 8) & 0xFF);
-      AppData.Buffer[i++] = (uint8_t)(longitude & 0xFF);
-      AppData.Buffer[i++] = (uint8_t)((altitudeGps >> 8) & 0xFF);
-      AppData.Buffer[i++] = (uint8_t)(altitudeGps & 0xFF);
-    }
-
-    AppData.BufferSize = i;
-#endif /* CAYENNE_LPP */
-
-    if ((JoinLedTimer.IsRunning) && (LmHandlerJoinStatus() == LORAMAC_HANDLER_SET))
-    {
-      UTIL_TIMER_Stop(&JoinLedTimer);
-      HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
-    }
-
-    status = LmHandlerSend(&AppData, LmHandlerParams.IsTxConfirmed, false);
-    if (LORAMAC_HANDLER_SUCCESS == status)
-    {
-      APP_LOG(TS_ON, VLEVEL_L, "SEND REQUEST\r\n");
-    }
-    else if (LORAMAC_HANDLER_DUTYCYCLE_RESTRICTED == status)
-    {
-      nextTxIn = LmHandlerGetDutyCycleWaitTime();
-      if (nextTxIn > 0)
-      {
-        APP_LOG(TS_ON, VLEVEL_L, "Next Tx in  : ~%d second(s)\r\n", (nextTxIn / 1000));
-      }
-    }
-  }
 
   if (EventType == TX_ON_TIMER)
   {
@@ -845,6 +865,7 @@ static void OnJoinRequest(LmHandlerJoinParams_t *joinParams)
 
     APP_LOG(TS_OFF, VLEVEL_H, "###### U/L FRAME:JOIN | DR:%d | PWR:%d\r\n", joinParams->Datarate, joinParams->TxPower);
   }
+
   /* USER CODE END OnJoinRequest_1 */
 }
 

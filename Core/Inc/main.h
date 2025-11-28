@@ -42,6 +42,7 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -62,8 +63,6 @@ void Error_Handler(void);
 #define RTC_PREDIV_A ((1<<(15-RTC_N_PREDIV_S))-1)
 #define RS485_TX_Pin GPIO_PIN_6
 #define RS485_TX_GPIO_Port GPIOB
-#define LED3_Pin GPIO_PIN_11
-#define LED3_GPIO_Port GPIOB
 #define USARTx_RX_Pin GPIO_PIN_3
 #define USARTx_RX_GPIO_Port GPIOA
 #define USARTx_TX_Pin GPIO_PIN_2
@@ -82,6 +81,8 @@ void Error_Handler(void);
 #define GPIO_2_GPIO_Port GPIOC
 #define GPIO_1_Pin GPIO_PIN_12
 #define GPIO_1_GPIO_Port GPIOA
+#define LED3_Pin GPIO_PIN_2
+#define LED3_GPIO_Port GPIOC
 #define LED2_Pin GPIO_PIN_9
 #define LED2_GPIO_Port GPIOB
 #define LED1_Pin GPIO_PIN_15

@@ -42,7 +42,7 @@ extern "C" {
   * @brief Temperature and pressure values are retrieved from sensors shield
   *        (instead of sending dummy values). It requires MEMS IKS shield
   */
-#define SENSOR_ENABLED                       0
+#define SENSOR_ENABLED                       1
 
 /**
   * @brief  Verbose level for all trace logs
@@ -84,7 +84,10 @@ extern "C" {
 #define LOW_POWER_DISABLE                    0
 
 /* USER CODE BEGIN EC */
-
+#ifdef SENSOR_ENABLED
+#undef SENSOR_ENABLED
+#endif
+#define SENSOR_ENABLED 0
 /* USER CODE END EC */
 
 /* External variables --------------------------------------------------------*/

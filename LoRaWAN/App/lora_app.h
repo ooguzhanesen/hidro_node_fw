@@ -28,6 +28,8 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32wlxx_hal.h"
+
 
 /* USER CODE END Includes */
 
@@ -68,7 +70,7 @@ extern "C" {
 /*!
  * LoRaWAN default class
  */
-#define LORAWAN_DEFAULT_CLASS                       CLASS_A
+#define LORAWAN_DEFAULT_CLASS                       CLASS_C
 
 /*!
  * LoRaWAN default confirm state
