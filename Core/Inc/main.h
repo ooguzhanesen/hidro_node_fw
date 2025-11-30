@@ -89,6 +89,10 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOB
 #define RS485_RX_Pin GPIO_PIN_7
 #define RS485_RX_GPIO_Port GPIOB
+#define RELAY_2_Pin GPIO_PIN_8
+#define RELAY_2_GPIO_Port GPIOB
+#define RELAY_1_Pin GPIO_PIN_5
+#define RELAY_1_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
